@@ -7,6 +7,8 @@ public class SpnegoConfiguration {
     private String keyTabFile;
     private String serverUsername;
     private String serverPassword;
+    private String kerberosConfigFile;
+    private String loginConfigFile;
     private String loginModule;
 
 
@@ -54,6 +56,36 @@ public class SpnegoConfiguration {
     public void setServerPassword(String serverPassword) {
 
         this.serverPassword = serverPassword;
+    }
+
+    public String getKerberosConfigFile() {
+
+        return this.kerberosConfigFile;
+    }
+
+    public void setKerberosConfigFile(String kerberosConfigFile) {
+
+        this.kerberosConfigFile = kerberosConfigFile;
+    }
+
+    public boolean hasKerberosConfigFile() {
+
+        return this.kerberosConfigFile != null && !this.kerberosConfigFile.isEmpty();
+    }
+
+    public String getLoginConfigFile() {
+
+        return this.loginConfigFile;
+    }
+
+    public void setLoginConfigFile(String loginConfigFile) {
+
+        this.loginConfigFile = loginConfigFile;
+    }
+
+    public boolean hasLoginConfigFile() {
+
+        return this.loginConfigFile !=null && !this.loginConfigFile.isEmpty();
     }
 
     public String getLoginModule() {

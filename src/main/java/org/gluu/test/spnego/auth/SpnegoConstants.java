@@ -6,6 +6,8 @@ public class SpnegoConstants {
     public static final String AUTHORIZATION_HEADER_NAME = "Authorization";
     public static final String NEGOTIATE_AUTHORIZATION_TYPE = "Negotiate";
 
+    public static final String SPNEGO_CONFIG_KERBEROS_FILE = "spnego.kerberos.file";
+    public static final String SPNEGO_CONFIG_LOGIN_FILE =  "spnego.login.file";
     public static final String SPNEGO_CONFIG_KEYTAB_FILE = "spnego.keytab.file";
     public static final String SPNEGO_CONFIG_SERVER_USERNAME = "spnego.server.username";
     public static final String SPNEGO_CONFIG_SERVER_PASSWORD = "spnego.server.password";

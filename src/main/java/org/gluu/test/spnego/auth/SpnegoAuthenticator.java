@@ -6,7 +6,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.kerberos.KerberosPrincipal;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import javax.servlet.http.HttpServletResponse;
@@ -48,6 +47,16 @@ public class SpnegoAuthenticator {
     public void init(SpnegoConfiguration config) {
 
         try {
+
+            if(!config.hasKerberosConfigFile())
+                throw new SpnegoAuthException("Kerberos configuration file (krb5.conf) not specified");
+            
+            if(!config.hasLoginConfigFile())
+                throw new SpnegoAuthException("JAAS login configuration file (login.conf) not specified");
+            
+            System.setProperty("java.security.krb5.conf",config.getKerberosConfigFile());
+            System.setProperty("java.security.auth.login.config",config.getLoginConfigFile());
+                
             if(config.getServerAuthMethod() == SpnegoServerAuthMethod.USE_KEYTAB_FILE) {
                 loginContext = new LoginContext(config.getLoginModule());
             }else {
@@ -59,11 +68,10 @@ public class SpnegoAuthenticator {
 
             this.loginContext.login();
             this.credential = createCredential();
-
         }catch(LoginException e) {
             throw new SpnegoAuthException("SpnegoAuthenticator init() failed",e);            
         }catch(PrivilegedActionException e) {
-            throw new SpnegoAuthException("SpnegoAuthenticator init failed",e);
+            throw new SpnegoAuthException("SpnegoAuthenticator init() failed",e);
         }
     }
 
@@ -81,6 +89,7 @@ public class SpnegoAuthenticator {
             HttpResponseHeader header = SpnegoUtils.createSpnegoAuthHeader();
             authcontext.setHttpResponseCode(HttpServletResponse.SC_UNAUTHORIZED);
             authcontext.addHttpResponseHeader(header);
+            log.info("No authorization header found");
             return false;
         }
 
@@ -90,6 +99,7 @@ public class SpnegoAuthenticator {
             HttpResponseHeader header = SpnegoUtils.createSpnegoAuthHeader();
             authcontext.setHttpResponseCode(HttpServletResponse.SC_UNAUTHORIZED);  
             authcontext.addHttpResponseHeader(header);
+            log.info("Only SPNEGO supported");
             return false;
         }
 
@@ -134,13 +144,19 @@ public class SpnegoAuthenticator {
             }
 
             authcontext.addHttpResponseHeader(SpnegoUtils.createSpnegoHeader(token));
-            if(!context.isEstablished()) {
+            if(!context.isEstablished() && !context.isProtReady()) {
+                log.info("Context is not fully established yet.");
                 authcontext.setHttpResponseCode(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }
 
             authcontext.setPrincipal(context.getSrcName().toString());
-            authcontext.setDelegationCredential(context.getDelegCred());
+            log.info("Principal : " + context.getSrcName().toString());
+            try {
+                authcontext.setDelegationCredential(context.getDelegCred());
+            }catch(GSSException e) {
+                log.info("A non-fatal error occured. "+e.getMessage(),e);
+            }
             return true;
         }finally {
             if(null != context) {
